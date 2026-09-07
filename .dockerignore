@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+.mypy_cache
+**/__pycache__
+*.db
+infra
+tests
+README.md
+Makefile
+docker-compose.yml
+requirements-dev.txt
