@@ -2,3 +2,4 @@ fastapi>=0.115,<0.116
 uvicorn[standard]>=0.32,<0.33
 sqlalchemy>=2.0,<2.1
 pydantic-settings>=2.5,<3
+prometheus-fastapi-instrumentator>=7.0,<8

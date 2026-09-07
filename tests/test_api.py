@@ -33,3 +33,12 @@ def test_unknown_code_returns_404(client: TestClient) -> None:
 
 def test_invalid_url_is_rejected(client: TestClient) -> None:
     assert client.post("/api/links", json={"target_url": "not-a-url"}).status_code == 422
+
+
+def test_metrics_endpoint_exposes_prometheus_data(client: TestClient) -> None:
+    client.get("/healthz")  # generate at least one measured request
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    body = response.text
+    assert "http_requests_total" in body
+    assert "http_request_duration_seconds" in body

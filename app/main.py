@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,14 @@ settings = get_settings()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="shortlink-service", version=settings.version)
+
+# Exposes Prometheus metrics at /metrics: request rate, latency histogram and
+# per-status-code counters, labelled by handler. Scraped by Prometheus and
+# graphed in Grafana (see docker-compose.yml and monitoring/).
+Instrumentator(
+    excluded_handlers=["/metrics"],
+    should_group_status_codes=False,
+).instrument(app).expose(app, endpoint="/metrics", tags=["ops"])
 
 _MAX_CODE_ATTEMPTS = 5
 

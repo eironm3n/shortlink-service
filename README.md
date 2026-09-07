@@ -16,6 +16,7 @@ GET  /aB3xK9p          -> 307 Location: https://ejemplo.com/una/pagina/larga
 GET  /api/links/aB3xK9p -> {"visits": 1, ...}
 GET  /healthz          -> {"status": "ok"}
 GET  /version          -> {"version": "<git sha>"}
+GET  /metrics          -> métricas Prometheus (rate, latencia, errores por handler)
 ```
 
 ## Arquitectura
@@ -32,10 +33,12 @@ flowchart LR
     img -->|solo en main| ghcr[(ghcr.io<br/>shortlink-service)]
     ghcr -.->|terraform apply<br/>manual| ls[AWS Lightsail<br/>Container Service]
 
-    subgraph app[Contenedor]
+    subgraph stack[docker compose]
         api[FastAPI + Uvicorn] --> db[(SQLite<br/>/data volume)]
+        api -->|/metrics| prom[Prometheus]
+        prom --> graf[Grafana]
     end
-    ghcr --> app
+    ghcr --> api
 ```
 
 ## Qué demuestra este repo
@@ -52,7 +55,7 @@ CI en verde, imagen en GHCR, historial de ejecuciones del pipeline).
 | **Infra como código** | [`infra/`](./infra): Terraform para AWS Lightsail (servicio de contenedor + health check), formateado y validado en cada push |
 | **Testing** | [`tests/`](./tests): `pytest` con cobertura mínima del 90 % (`--cov-fail-under=90`), fixture de base de datos SQLite en memoria con `StaticPool` |
 | **Calidad de código** | `ruff` (lint + formato) y `mypy` (`disallow_untyped_defs`) sobre `app/` |
-| **Observabilidad básica** | Endpoints `/healthz` y `/version`; el `HEALTHCHECK` del contenedor consume `/healthz`; `/version` reporta el SHA del commit desplegado |
+| **Observabilidad** | `/metrics` (Prometheus) con rate, latencia (histograma) y errores por `handler`; stack **Prometheus + Grafana** en el `compose` con datasource y dashboard aprovisionados ([`monitoring/`](./monitoring)); `/healthz` y `/version` para health checks |
 | **12-factor / config** | [`app/config.py`](./app/config.py): toda la config por variables de entorno `SHORTLINK_*` |
 
 ## Puesta en marcha
@@ -61,7 +64,18 @@ CI en verde, imagen en GHCR, historial de ejecuciones del pipeline).
 
 ```bash
 docker compose up --build
-# API en http://localhost:8000 · docs en http://localhost:8000/docs
+```
+
+| Servicio | URL | Nota |
+|---|---|---|
+| API | http://localhost:8000 · docs en `/docs` | el servicio |
+| Prometheus | http://localhost:9090 | scrapea `/metrics` cada 5 s |
+| Grafana | http://localhost:3000 | login anónimo (Viewer); dashboard **shortlink-service** ya cargado |
+
+Para ver los gráficos moverse, generá tráfico:
+
+```bash
+make load          # 60 s de requests mezclando creación, redirects y 404
 ```
 
 ### Local, para desarrollo
@@ -97,9 +111,29 @@ está en [`infra/README.md`](./infra/README.md).
 - **Sin auth ni rate limiting**: fuera del alcance de esta pieza; el foco es la
   cadena de build/deploy, no el producto.
 
+## Observabilidad
+
+El servicio expone `/metrics` en formato Prometheus (vía
+`prometheus-fastapi-instrumentator`): contador `http_requests_total` y los
+histogramas `http_request_duration_seconds` / `http_request_duration_highr_seconds`,
+etiquetados por `method`, `status` y `handler`.
+
+El `docker compose` levanta además:
+
+- **Prometheus** ([`monitoring/prometheus.yml`](./monitoring/prometheus.yml)) — scrapea la API cada 5 s.
+- **Grafana** ([`monitoring/grafana/`](./monitoring/grafana)) — con datasource y dashboard
+  aprovisionados por archivo: 4 paneles (request rate por handler, latencia
+  p50/p95/p99, errores 4xx/5xx, total de requests).
+
+> **Captura del dashboard pendiente.** Para generarla: `docker compose up`,
+> luego `make load`, abrir Grafana en `http://localhost:3000`, y guardar el
+> panel como `docs/grafana.png` (después descomentar la línea de imagen de abajo).
+>
+> <!-- ![Grafana dashboard](docs/grafana.png) -->
+
 ## Roadmap
 
+- [x] Métricas Prometheus (`/metrics`) y dashboard de Grafana en el `compose`
 - [ ] Backend Postgres opcional + migraciones con Alembic
-- [ ] Métricas Prometheus (`/metrics`) y dashboard de Grafana en el `compose`
 - [ ] Backend remoto de Terraform (S3 + DynamoDB lock)
 - [ ] Deploy automático a Lightsail desde el pipeline (con `AWS_*` en secrets)

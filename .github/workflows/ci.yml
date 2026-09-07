@@ -72,6 +72,7 @@ jobs:
             -d '{"target_url":"https://example.com/page"}' \
             | python3 -c 'import sys, json; print(json.load(sys.stdin)["code"])')
           curl -si "http://localhost:8000/$code" | grep -i "location: https://example.com/page"
+          curl -sf http://localhost:8000/metrics | grep -q http_requests_total
           docker rm -f app
 
       - name: Log in to GHCR

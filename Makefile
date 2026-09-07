@@ -1,4 +1,4 @@
-.PHONY: install dev test lint fmt docker up down clean
+.PHONY: install dev test lint fmt docker up down load clean
 
 install:
 	python -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
@@ -26,6 +26,9 @@ up:
 
 down:
 	docker compose down
+
+load:
+	./scripts/load.sh
 
 clean:
 	rm -rf .venv .pytest_cache .ruff_cache .mypy_cache **/__pycache__ *.db .coverage
