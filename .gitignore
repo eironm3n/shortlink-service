@@ -8,8 +8,9 @@ __pycache__/
 .mypy_cache/
 .env
 
-# Terraform
-infra/.terraform/
-infra/*.tfstate
-infra/*.tfstate.*
-infra/.terraform.lock.hcl
+# Terraform (infra/, infra/bootstrap/, infra/local/)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform.lock.hcl

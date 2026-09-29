@@ -106,3 +106,9 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false
       - run: terraform validate
+      # Módulos del entorno local (LocalStack + provider Docker): se validan
+      # sin backend; el apply real corre en local con scripts/up.ps1.
+      - name: Validate infra/bootstrap
+        run: terraform -chdir=bootstrap init -backend=false && terraform -chdir=bootstrap validate
+      - name: Validate infra/local
+        run: terraform -chdir=local init -backend=false && terraform -chdir=local validate

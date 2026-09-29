@@ -1,0 +1,15 @@
+# LocalStack: emula la API de AWS en localhost:4566 (sin cuenta de AWS, sin costo).
+# Lo usa el backend remoto de Terraform (bucket S3 del estado) — ver infra/bootstrap.
+#
+# Requiere LOCALSTACK_AUTH_TOKEN (plan gratuito de https://app.localstack.cloud).
+# scripts/up.ps1 lo toma del .env de la raíz del repo; nunca se commitea.
+name: shortlink-localstack
+
+services:
+  localstack:
+    image: localstack/localstack:2026.8.4
+    container_name: shortlink-localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:?Falta LOCALSTACK_AUTH_TOKEN (ver .env.example)}
