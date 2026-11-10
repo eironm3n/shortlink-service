@@ -51,7 +51,7 @@ CI en verde, imagen en GHCR, historial de ejecuciones del pipeline).
 |---|---|
 | **Contenedores** | [`Dockerfile`](./Dockerfile): build multi-stage, imagen final `slim`, usuario no-root (`uid 1000`), `HEALTHCHECK`, volumen para datos |
 | **CI/CD** | [`.github/workflows/ci.yml`](./.github/workflows/ci.yml): 3 jobs — `quality`, `image`, `iac` — con dependencias, caché de capas (`type=gha`) y publicación condicional (`only main`) |
-| **Seguridad de la cadena** | Escaneo con **Trivy** en el pipeline · `permissions` mínimos por job · sin secretos propios (sólo `GITHUB_TOKEN`) · contenedor no-root |
+| **Seguridad de la cadena** | Escaneo con **Trivy** en el pipeline · `permissions` mínimos por job · sin secretos propios (solo `GITHUB_TOKEN`) · contenedor no-root |
 | **Infra como código** | [`infra/`](./infra): Terraform para AWS Lightsail (servicio de contenedor + health check), formateado y validado en cada push |
 | **Testing** | [`tests/`](./tests): `pytest` con cobertura mínima del 90 % (`--cov-fail-under=90`), fixture de base de datos SQLite en memoria con `StaticPool` |
 | **Calidad de código** | `ruff` (lint + formato) y `mypy` (`disallow_untyped_defs`) sobre `app/` |
